@@ -1,0 +1,16 @@
+{
+  // 打开这个项目时，VS Code 会提示"是否安装推荐扩展"，点一下就能全装
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-python.debugpy",
+    "ms-toolsai.jupyter",
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "mikestead.dotenv",
+    "humao.rest-client",
+    "yzhang.markdown-all-in-one"
+  ],
+  "unwantedRecommendations": []
+}
