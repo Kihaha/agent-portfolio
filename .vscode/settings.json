@@ -28,8 +28,8 @@
 
   // ============ Python 解释器与类型检查 ============
 
-  // 优先使用项目里的虚拟环境
-  "python.defaultInterpreterPath": ".venv\\Scripts\\python.exe",
+  // 优先使用项目里的虚拟环境（必须写绝对路径，相对路径 VS Code 解析不了）
+  "python.defaultInterpreterPath": "C:\\Users\\kk\\Desktop\\dsh\\agent-portfolio\\.venv\\Scripts\\python.exe",
   "python.terminal.activateEnvironment": true,
 
   // 类型检查强度：basic 会主动报出「类型不匹配」，
