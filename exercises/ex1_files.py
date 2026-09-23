@@ -34,8 +34,23 @@ def list_files(directory: str | Path, suffix: str = "") -> list[Path]:
     示例：
       list_files("data", ".csv")
       # [PosixPath('data/a.csv'), PosixPath('data/b.csv')]
+
     """
-    raise NotImplementedError("TODO: 实现 list_files")
+    files = []
+    files2 = []
+    path = Path(directory)
+    if not path.exists() or not path.is_dir():
+        raise FileNotFoundError(f"{directory}不存在或者不是一个目录")
+    for item in path.iterdir():
+        if item.is_file():
+            files.append(item)
+
+    if suffix:
+        for item in files:
+            if item.name.endswith(suffix):
+                files2.append(item)
+        files = files2
+    return sorted(files, key=lambda p: p.name)
 
 
 def total_size(paths: list[Path]) -> int:
@@ -43,7 +58,12 @@ def total_size(paths: list[Path]) -> int:
 
     提示：Path.stat().st_size
     """
-    raise NotImplementedError("TODO: 实现 total_size")
+    sum = 0
+    if paths is None:
+        return sum
+    for item in paths:
+        sum += Path.stat(item).st_size
+    return sum
 
 
 def group_by_suffix(paths: list[Path]) -> dict[str, int]:
@@ -56,7 +76,12 @@ def group_by_suffix(paths: list[Path]) -> dict[str, int]:
 
     提示：Path.suffix；用 counts[key] = counts.get(key, 0) + 1
     """
-    raise NotImplementedError("TODO: 实现 group_by_suffix")
+    key = " "
+    counts = {}
+    for item in paths:
+        key = item.suffix.lower()
+        counts[key] = counts.get(key, 0) + 1
+    return counts
 
 
 def main() -> None:
@@ -67,7 +92,13 @@ def main() -> None:
       - 用 f-string 打印，例如：print(f"文件数: {len(files)}")
       - 总大小建议换算成 KB 显示（字节数 / 1024，保留 2 位小数）
     """
-    raise NotImplementedError("TODO: 实现 main")
+    paths = list_files(".")
+    print(f"文件总数为：{len(paths)}")
+    length = total_size(paths)
+    print(f"文件大小为{length / 1024:.2f}KB")
+    counts = group_by_suffix(paths)
+    for items in counts:
+        print(f"{items}")
 
 
 if __name__ == "__main__":

@@ -14,12 +14,7 @@
 from __future__ import annotations
 
 import json
-import os
-import time
 from pathlib import Path
-
-import httpx
-from dotenv import load_dotenv
 
 
 class FetchError(Exception):
@@ -69,12 +64,18 @@ def save_json(data: dict, path: str | Path) -> None:
 
     提示：Path(path).parent.mkdir(parents=True, exist_ok=True)
     """
-    raise NotImplementedError("TODO: 实现 save_json")
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "w", encoding="UTF-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def load_json(path: str | Path) -> dict:
     """读取 JSON 文件并返回 dict。"""
-    raise NotImplementedError("TODO: 实现 load_json")
+    p = Path(path)
+    with open(p, encoding="utf-8") as f:
+        data = json.load(f)
+    return data
 
 
 def main() -> None:
