@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 
 class Message(BaseModel):
@@ -52,7 +52,10 @@ def parse_message(raw: dict[str, Any]) -> Message:
       上层代码只需要处理一种异常类型（ValueError），而且消息可读。
       这也叫"在边界处把第三方异常翻译成自己的异常"。
     """
-    raise NotImplementedError("TODO: 实现 parse_message")
+    try:
+        return Message.model_validate(raw)
+    except ValidationError as e:
+        raise ValueError(f"{e}") from e
 
 
 def parse_messages(raw_list: list[dict[str, Any]]) -> list[Message]:
@@ -65,7 +68,13 @@ def parse_messages(raw_list: list[dict[str, Any]]) -> list[Message]:
 
     提示：用 enumerate 拿到下标；第 i 条出错时 message 里带上 i
     """
-    raise NotImplementedError("TODO: 实现 parse_messages")
+    a = list()
+    for i, x in enumerate(raw_list):
+        try:
+            a.append(parse_message(x))
+        except ValueError as e:
+            raise ValueError(f"第{i}条的错误为{e}") from e
+    return a
 
 
 def demo_validation_error() -> str:
@@ -78,7 +87,11 @@ def demo_validation_error() -> str:
     看完输出你就明白：错误信息会明确告诉你"哪个字段、为什么不行"，
     这比"运行到后面某处突然 TypeError"好太多。
     """
-    raise NotImplementedError("TODO: 实现 demo_validation_error")
+    try:
+        Message.model_validate({"role": "user", "content": ""})
+    except ValidationError as e:
+        return str(e)
+    raise AssertionError("坏数据竟然通过了校验，说明校验逻辑坏了")
 
 
 if __name__ == "__main__":

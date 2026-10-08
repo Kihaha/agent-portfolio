@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def parse_numbers(text: str) -> tuple[list[float], list[str]]:
@@ -32,7 +33,19 @@ def parse_numbers(text: str) -> tuple[list[float], list[str]]:
       - text.replace(",", " ").split() 一次搞定两种分隔符
       - 用 try / except ValueError 包住 float(item)
     """
-    raise NotImplementedError("TODO: 实现 parse_numbers")
+    values: list[float] = []
+    bad: list[str] = []
+
+    # 逗号先换成空格，两种分隔符就统一成一种，一次 split() 全部切开
+    for item in text.replace(",", " ").split():
+        try:
+            values.append(float(item))
+        except ValueError:
+            # 转不动就原样记下来；不抛异常——因为"有几个片段看不懂"是预期内的输入，
+            # 不是程序 bug，交给 main 决定怎么告诉用户
+            bad.append(item)
+
+    return values, bad
 
 
 def stats(values: list[float]) -> dict[str, float | int | None]:
@@ -44,8 +57,20 @@ def stats(values: list[float]) -> dict[str, float | int | None]:
       - min/max 用内置函数
 
     提示：空列表要单独判断，这是"边界条件"，面试也爱问
+
     """
-    raise NotImplementedError("TODO: 实现 stats")
+    # 边界条件先处理：空列表不能进下面的除法，否则 ZeroDivisionError
+    if not values:
+        return {"count": 0, "sum": None, "mean": None, "min": None, "max": None}
+
+    total = sum(values)
+    return {
+        "count": len(values),
+        "sum": total,
+        "mean": round(total / len(values), 2),
+        "min": min(values),
+        "max": max(values),
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -66,8 +91,40 @@ def main(argv: list[str] | None = None) -> int:
       - parser.add_argument("--json", action="store_true")
       - args = parser.parse_args(argv)     # argv 传 None 时 argparse 自动读 sys.argv
       - print(..., file=sys.stderr)
+
     """
-    raise NotImplementedError("TODO: 实现 main")
+    parser = argparse.ArgumentParser(description="统计一串数字")
+    parser.add_argument("numbers", nargs="?", default="")
+    parser.add_argument("--file", "-f")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+
+    # main 只做三件事：拿输入 → 调纯函数 → 打印。计算逻辑全在上面两个函数里
+    if args.file:
+        text = Path(args.file).read_text(encoding="utf-8")
+    else:
+        text = args.numbers
+        if not text.strip():
+            # 用法提示进 stderr，退出码 2 让 shell 和 CI 能判断"这次没干活"
+            parser.print_usage(sys.stderr)
+            print("错误：请提供一串数字，或用 --file 指定文件", file=sys.stderr)
+            return 2
+
+    values, bad = parse_numbers(text)
+    if bad:
+        # 只提醒，不污染 stdout —— 不然 --json 的输出就没法被程序解析了
+        print(f"已忽略非法片段: {', '.join(bad)}", file=sys.stderr)
+
+    result = stats(values)
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False))
+    else:
+        print(f"个数: {result['count']}")
+        print(f"总和: {result['sum']}")
+        print(f"平均: {result['mean']}")
+        print(f"最小: {result['min']}")
+        print(f"最大: {result['max']}")
+    return 0
 
 
 if __name__ == "__main__":

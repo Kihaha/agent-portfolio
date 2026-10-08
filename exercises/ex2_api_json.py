@@ -14,7 +14,12 @@
 from __future__ import annotations
 
 import json
+import os
+import time
 from pathlib import Path
+
+import httpx
+from dotenv import load_dotenv
 
 
 class FetchError(Exception):
@@ -28,6 +33,7 @@ class FetchError(Exception):
 def fetch_json(
     url: str,
     *,
+    headers: dict[str, str] | None = None,
     retries: int = 3,
     timeout: float = 10.0,
     backoff: float = 0.5,
@@ -50,7 +56,22 @@ def fetch_json(
       - 用 for 循环 + 一个 last_error 变量保存最后一次异常
       - 最后 raise FetchError(f"...") from last_error，保留原因链
     """
-    raise NotImplementedError("TODO: 实现 fetch_json")
+    last_error = None
+    for i in range(retries):
+        try:
+            r = httpx.get(url, headers=headers, timeout=timeout)
+            r.raise_for_status()
+            b = r.json()
+            if not isinstance(b, dict):
+                raise ValueError(f"顶层不是 dict，而是 {type(b).__name__}")
+            return b
+        except (httpx.HTTPError, ValueError) as e:
+            print("失败:", type(e).__name__, "|", e)
+            if i < retries - 1:
+                time.sleep(backoff * 2**i)
+
+            last_error = e
+    raise FetchError(f"尝试了{retries}次，最后的错误为{last_error}") from last_error
 
 
 def save_json(data: dict, path: str | Path) -> None:
@@ -95,7 +116,19 @@ def main() -> None:
         headers: dict[str, str] | None = None 参数（这是正常的接口演进）
       - 打印时只打印 id 列表就够了，别把整个响应刷屏
     """
-    raise NotImplementedError("TODO: 实现 main")
+    load_dotenv()
+    key = os.getenv("DEEPSEEK_API_KEY")
+    path = "data/models.json"
+    if not key:
+        print("key不存在，返回")
+        return
+    json_out = fetch_json(
+        url="https://api.deepseek.com/models", headers={"Authorization": f"Bearer {key}"}
+    )
+    save_json(json_out, path)
+    data = load_json(path)
+    for i in data["data"]:
+        print(i["id"])
 
 
 if __name__ == "__main__":
